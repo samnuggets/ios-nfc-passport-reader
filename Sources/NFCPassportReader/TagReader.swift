@@ -256,8 +256,19 @@ public class TagReader {
             Log.verbose("TagReader - [SM] \(toSend)" )
         }
         
-        let (data, sw1, sw2) = try await tag.sendCommand(apdu: toSend)
+        var (data, sw1, sw2) = try await tag.sendCommand(apdu: toSend)
         Log.verbose( "TagReader - Received response" )
+
+        // Some commands may have bigger response than expected. Read the whole response using INS 0xC0 (GET RESPONSE).
+        while (sw1 == 0x61) {
+            let getResponseCmd = NFCISO7816APDU(instructionClass: 0x0, instructionCode: 0xC0, p1Parameter: 0x0, p2Parameter: 0x0, data: Data(), expectedResponseLength: Int(sw2))
+            let nextSegment: Data
+            // Overwrite sw1 and sw2.
+            (nextSegment, sw1, sw2) = try await tag.sendCommand(apdu: getResponseCmd)
+            Log.verbose("Read remaining data. Accumulated: \(data.count + nextSegment.count)b. Last batch \(nextSegment.count)b. Still remaining: \(sw2)b")
+            data += nextSegment
+        }
+        
         var rep = ResponseAPDU(data: [UInt8](data), sw1: sw1, sw2: sw2)
         
         if let sm = self.secureMessaging {
