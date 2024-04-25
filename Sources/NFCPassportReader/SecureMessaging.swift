@@ -87,7 +87,7 @@ public class SecureMessaging {
         // otherwise its a single byte of size
         let size = do87.count + do97.count + do8e.count
         var dataSize: [UInt8]
-        if size > 255 {
+        if size > 255 || apdu.expectedResponseLength > 231 {
             dataSize = [0x00] + intToBin(size, pad: 4)
         } else {
             dataSize = intToBin(size)
@@ -97,7 +97,7 @@ public class SecureMessaging {
             
         // If the data is more that 255, specify the we are using extended length (0x00, 0x00)
         // Thanks to @filom for the fix!
-        if size > 255 {
+        if size > 255 || apdu.expectedResponseLength > 231 {
             protectedAPDU += [0x00,0x00]
         } else {
             protectedAPDU += [0x00]
@@ -150,6 +150,12 @@ public class SecureMessaging {
         
         //DO'99'
         // Mandatory, only absent if SM error occurs
+        guard rapduBin.count >= offset + 5 else {
+            let returnSw1 = (rapduBin.count >= offset+3) ? rapduBin[offset+2] : 0;
+            let returnSw2 = (rapduBin.count >= offset+4) ? rapduBin[offset+3] : 0;
+            return ResponseAPDU(data: [], sw1: returnSw1, sw2: returnSw2);
+        }
+        
         do99 = [UInt8](rapduBin[offset..<offset+4])
         let sw1 = rapduBin[offset+2]
         let sw2 = rapduBin[offset+3]
