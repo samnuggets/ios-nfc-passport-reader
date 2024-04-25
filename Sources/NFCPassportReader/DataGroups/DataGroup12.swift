@@ -18,10 +18,11 @@ public class DataGroup12 : DataGroup {
     public private(set) var rearImage : [UInt8]?
     public private(set) var personalizationTime : String?
     public private(set) var personalizationDeviceSerialNr : String?
+
+    public override var datagroupType: DataGroupId { .DG12 }
     
     required init( _ data : [UInt8] ) throws {
         try super.init(data)
-        datagroupType = .DG12
     }
     
     override func parse(_ data: [UInt8]) throws {

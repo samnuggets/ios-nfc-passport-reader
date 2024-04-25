@@ -23,10 +23,11 @@ public enum DocTypeEnum: String {
 public class DataGroup1 : DataGroup {
     
     public private(set) var elements : [String:String] = [:]
+
+    public override var datagroupType: DataGroupId { .DG1 }
     
     required init( _ data : [UInt8] ) throws {
         try super.init(data)
-        datagroupType = .DG1
     }
     
     override func parse(_ data: [UInt8]) throws {
